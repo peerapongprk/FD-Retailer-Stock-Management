@@ -10,11 +10,12 @@ _BG = "rgba(0,0,0,0)"
 _FONT = dict(family="Sarabun, sans-serif", color="#e2e8f0")
 
 def _base_layout(**kwargs):
-    return dict(
+    base = dict(
         paper_bgcolor=_BG, plot_bgcolor=_BG,
         font=_FONT, margin=dict(l=10, r=10, t=30, b=10),
-        **kwargs,
     )
+    base.update(kwargs)
+    return base
 
 
 def revenue_trend_chart(trend_df: pd.DataFrame) -> go.Figure:
@@ -47,7 +48,7 @@ def rfm_donut(rfm_df: pd.DataFrame) -> go.Figure:
         textinfo="label+percent",
         textfont=dict(size=11),
     ))
-    fig.update_layout(**_base_layout(showlegend=False, margin=dict(l=0,r=0,t=10,b=0)))
+    fig.update_layout(**_base_layout(showlegend=False, margin=dict(l=0, r=0, t=10, b=0)))
     return fig
 
 
@@ -61,7 +62,7 @@ def top_items_bar(items_df: pd.DataFrame) -> go.Figure:
         textposition="outside",
     ))
     fig.update_layout(
-        **_base_layout(),
+        **_base_layout(margin=dict(l=10, r=60, t=10, b=10)),
         xaxis=dict(showgrid=False, visible=False),
         yaxis=dict(showgrid=False, tickfont=dict(size=10)),
         height=max(300, len(df) * 28),
@@ -95,12 +96,11 @@ def dept_pie(dept_df: pd.DataFrame) -> go.Figure:
         textfont=dict(size=10),
         marker=dict(colors=px.colors.qualitative.Set2),
     ))
-    fig.update_layout(**_base_layout(showlegend=False, margin=dict(l=0,r=0,t=10,b=0)))
+    fig.update_layout(**_base_layout(showlegend=False, margin=dict(l=0, r=0, t=10, b=0)))
     return fig
 
 
 def oos_urgency_bar(oos_df: pd.DataFrame) -> go.Figure:
-    """Bar chart: days until OOS per customer-item (top 15 most urgent)."""
     df = oos_df.head(15).copy()
     color_map = {"CRITICAL": "#ef4444", "HIGH": "#f59e0b", "MEDIUM": "#3b82f6", "OK": "#10b981"}
     colors = df["urgency"].map(color_map).fillna("#6b7280")
@@ -114,7 +114,7 @@ def oos_urgency_bar(oos_df: pd.DataFrame) -> go.Figure:
         textposition="inside",
     ))
     fig.update_layout(
-        **_base_layout(),
+        **_base_layout(margin=dict(l=10, r=10, t=10, b=10)),
         xaxis=dict(title="วันที่เหลือ", showgrid=False),
         yaxis=dict(showgrid=False, tickfont=dict(size=10)),
         height=max(300, len(df) * 30),
