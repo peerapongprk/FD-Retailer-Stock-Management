@@ -27,6 +27,47 @@ from database.schema import MAKRO, RFM_COLOR, RFM_ADVICE, DAY_TH
 
 inject_css()
 
+# ── Breadcrumb ────────────────────────────────────────────────────────────────
+
+_BREADCRUMB_LABELS = {
+    "home": "🏠 Overview",
+    "calendar": "📅 Calendar",
+    "database": "🗄️ Database",
+    "item_detail": "📦 สินค้า",
+    "customer_detail": "🏪 ลูกค้า",
+}
+
+def render_breadcrumb(extra: str = ""):
+    """แสดง breadcrumb trail ด้านบนหน้า"""
+    page  = st.session_state.page
+    prev  = st.session_state.prev_page
+    parts = []
+    # Always show home as root
+    parts.append(("home", "🏠 Overview"))
+    if prev != "home" and prev != page:
+        parts.append((prev, _BREADCRUMB_LABELS.get(prev, prev)))
+    if page != "home":
+        label = _BREADCRUMB_LABELS.get(page, page)
+        if extra:
+            label = f"{label}: {extra}"
+        parts.append((page, label))
+
+    crumbs_html = ""
+    for i, (pg, lbl) in enumerate(parts):
+        is_last = (i == len(parts) - 1)
+        if is_last:
+            crumbs_html += f'<span style="color:#1e293b;font-weight:600;font-size:0.82rem">{lbl}</span>'
+        else:
+            crumbs_html += (
+                f'<span style="color:#1a6faf;font-size:0.82rem;cursor:pointer" '
+                f'onclick="void(0)">{lbl}</span>'
+                f'<span style="color:#94a3b8;margin:0 6px;font-size:0.8rem">›</span>'
+            )
+    st.markdown(
+        f'<div style="padding:4px 0 10px;display:flex;align-items:center">{crumbs_html}</div>',
+        unsafe_allow_html=True)
+
+
 # ── session defaults ──────────────────────────────────────────────────────────
 for k, v in {
     "page": "home", "prev_page": "home",
@@ -213,14 +254,13 @@ def _render_top_items(df):
         disp["ยอดขาย (฿)"] = disp["ยอดขาย (฿)"].apply(lambda v: f"{v:,.0f}")
         disp["กำไร (฿)"]   = disp["กำไร (฿)"].apply(lambda v: f"{v:,.0f}")
 
-        col_tbl, col_btns = st.columns([5, 1])
-        with col_tbl:
-            st.dataframe(disp, use_container_width=True, height=390, hide_index=False)
-        with col_btns:
-            st.markdown("<div style='margin-top:8px'></div>", unsafe_allow_html=True)
-            for idx, row in top.iterrows():
-                if st.button("🔍", key=f"item_{div}_{idx}",
-                             help=row[MAKRO.ITEM][:30]):
+        st.dataframe(disp, use_container_width=True, height=390, hide_index=False)
+        # Drill-down buttons below table
+        btn_cols = st.columns(min(5, len(top)))
+        for idx, row in top.iterrows():
+            with btn_cols[idx % len(btn_cols)]:
+                short = row[MAKRO.ITEM][:18] + ("…" if len(row[MAKRO.ITEM])>18 else "")
+                if st.button(f"🔍 {short}", key=f"item_{div}_{idx}", use_container_width=True):
                     go("item_detail", detail_item=row[MAKRO.ITEM])
 
         # Pareto panel
@@ -251,15 +291,13 @@ def _render_top_items(df):
                 p_disp["ยอดขาย (฿)"] = p_disp["ยอดขาย (฿)"].apply(lambda v: f"{v:,.0f}")
                 p_disp["Cum%"] = p_disp["Cum%"].apply(lambda v: f"{v:.1f}%")
 
-                col_pt, col_pb = st.columns([5,1])
-                with col_pt:
-                    st.dataframe(p_disp, use_container_width=True,
-                                 height=680, hide_index=True)  # ~20 rows
-                with col_pb:
-                    st.markdown("<div style='margin-top:8px'></div>", unsafe_allow_html=True)
-                    for idx2, prow in pareto_df.reset_index().head(20).iterrows():
-                        if st.button("🔍", key=f"pi_{div}_{idx2}",
-                                     help=prow[MAKRO.ITEM][:30]):
+                st.dataframe(p_disp, use_container_width=True, height=680, hide_index=True)
+                st.caption("👆 กดหัวตารางเพื่อ sort | กดปุ่มด้านล่างเพื่อดูรายละเอียดสินค้า")
+                btn_cols2 = st.columns(5)
+                for idx2, prow in pareto_df.reset_index().head(20).iterrows():
+                    with btn_cols2[idx2 % 5]:
+                        short = prow[MAKRO.ITEM][:15] + ("…" if len(prow[MAKRO.ITEM])>15 else "")
+                        if st.button(f"🔍 {short}", key=f"pi_{div}_{idx2}", use_container_width=True):
                             go("item_detail", detail_item=prow[MAKRO.ITEM])
 
 
@@ -405,7 +443,10 @@ def _render_alerts(df, rfm_df, restock_df):
 def page_item_detail():
     item_name = st.session_state.detail_item
     df = _df()
-    if st.button("← กลับ", type="secondary"): go(st.session_state.prev_page)
+    col_back, _ = st.columns([1,8])
+    with col_back:
+        if st.button("← กลับ", type="secondary"): go(st.session_state.prev_page)
+    render_breadcrumb(extra=item_name or "")
     if df.empty or not item_name:
         st.warning("ไม่พบข้อมูลสินค้า"); st.stop()
 
@@ -462,13 +503,13 @@ def page_item_detail():
         disp.columns = ["ลูกค้า","ประเภท","ยอดขาย (฿)","เดือน"]
         disp["ยอดขาย (฿)"] = disp["ยอดขาย (฿)"].apply(lambda v: f"{v:,.0f}")
 
-        col_tbl, col_btns = st.columns([5,1])
-        with col_tbl:
-            st.dataframe(disp, use_container_width=True, height=390, hide_index=False)
-        with col_btns:
-            st.markdown("<div style='margin-top:8px'></div>", unsafe_allow_html=True)
-            for idx, row in top_custs.iterrows():
-                if st.button("🔍", key=f"ic_{idx}", help=row[MAKRO.CUSTOMER][:25]):
+        st.dataframe(disp, use_container_width=True, height=390, hide_index=False)
+        st.caption("👆 กดหัวตารางเพื่อ sort")
+        btn_cols3 = st.columns(min(5, len(top_custs)))
+        for idx, row in top_custs.iterrows():
+            with btn_cols3[idx % len(btn_cols3)]:
+                short = row[MAKRO.CUSTOMER][:16] + ("…" if len(row[MAKRO.CUSTOMER])>16 else "")
+                if st.button(f"🏪 {short}", key=f"ic_{idx}", use_container_width=True):
                     go("customer_detail",
                        detail_cust_id=row[MAKRO.CUST_NUM],
                        detail_cust_name=row[MAKRO.CUSTOMER])
@@ -591,7 +632,10 @@ def page_customer_detail():
     cust_id   = st.session_state.detail_cust_id
     cust_name = st.session_state.detail_cust_name
     df = _df()
-    if st.button("← กลับ", type="secondary"): go(st.session_state.prev_page)
+    col_back, _ = st.columns([1,8])
+    with col_back:
+        if st.button("← กลับ", type="secondary"): go(st.session_state.prev_page)
+    render_breadcrumb(extra=cust_name or "")
     if df.empty or cust_id is None:
         st.warning("ไม่พบข้อมูล"); st.stop()
 
@@ -685,13 +729,13 @@ def page_customer_detail():
             disp = items_hist[[MAKRO.ITEM, MAKRO.CLASS, MAKRO.DEPT, "Revenue","Months"]].copy()
             disp.columns = ["สินค้า","Class","Dept","ยอดขาย (฿)","เดือน"]
             disp["ยอดขาย (฿)"] = disp["ยอดขาย (฿)"].apply(lambda v: f"{v:,.0f}")
-            col_tbl, col_btns = st.columns([5,1])
-            with col_tbl:
-                st.dataframe(disp, use_container_width=True, height=680, hide_index=True)
-            with col_btns:
-                st.markdown("<div style='margin-top:8px'></div>", unsafe_allow_html=True)
-                for idx, row in items_hist.head(20).iterrows():
-                    if st.button("🔍", key=f"hist_{idx}", help=row[MAKRO.ITEM][:25]):
+            st.dataframe(disp, use_container_width=True, height=680, hide_index=True)
+            st.caption("👆 กดหัวตารางเพื่อ sort")
+            btn_cols4 = st.columns(5)
+            for idx, row in items_hist.head(20).iterrows():
+                with btn_cols4[idx % 5]:
+                    short = row[MAKRO.ITEM][:15] + ("…" if len(row[MAKRO.ITEM])>15 else "")
+                    if st.button(f"📦 {short}", key=f"hist_{idx}", use_container_width=True):
                         go("item_detail", detail_item=row[MAKRO.ITEM])
 
 
