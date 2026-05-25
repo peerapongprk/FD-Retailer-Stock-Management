@@ -96,7 +96,7 @@ def pareto_chart(pareto_df: pd.DataFrame) -> go.Figure:
     return fig
 
 
-def dow_bar(dow_df: pd.DataFrame) -> go.Figure:
+def dow_bar(dow_df: pd.DataFrame, title: str = "") -> go.Figure:
     """Bar chart by day of week."""
     fig = go.Figure(go.Bar(
         x=dow_df["Day"], y=dow_df["Revenue"],
@@ -104,7 +104,9 @@ def dow_bar(dow_df: pd.DataFrame) -> go.Figure:
         text=dow_df["Revenue"].apply(lambda v: f"฿{v/1000:.1f}K"),
         textposition="outside", textfont=dict(size=11),
     ))
-    fig.update_layout(**_base(h=240, margin=dict(l=8,r=8,t=28,b=8)),
+    base = _base(h=240, margin=dict(l=8,r=8,t=32,b=8))
+    if title: base["title"] = dict(text=title, font=dict(size=13), x=0)
+    fig.update_layout(**base,
                       xaxis=dict(showgrid=False),
                       yaxis=dict(showgrid=True, gridcolor=_GRID, visible=False))
     return fig
