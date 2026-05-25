@@ -160,3 +160,42 @@ def oos_urgency_bar(oos_df: pd.DataFrame) -> go.Figure:
                       xaxis=dict(title="วันที่เหลือ", showgrid=False),
                       yaxis=dict(showgrid=False, tickfont=dict(size=10)))
     return fig
+
+
+def dow_heatmap(dow_div_df: pd.DataFrame) -> go.Figure:
+    """Grouped bar by DOW and Division."""
+    colors = {"DRY FOOD": _C_BLUE, "FRESH FOOD": _C_TEAL, "NON FOOD": _C_AMBER}
+    fig = go.Figure()
+    for div in ["DRY FOOD","FRESH FOOD","NON FOOD"]:
+        sub = dow_div_df[dow_div_df.get("Division", dow_div_df.columns[1]) == div] if "Division" in dow_div_df.columns else pd.DataFrame()
+        if sub.empty: continue
+        sub = sub.set_index("_dow").reindex(range(7)).fillna(0).reset_index()
+        sub["Day"] = sub["_dow"].map(dict(enumerate(DAY_TH)))
+        fig.add_trace(go.Bar(x=sub["Day"], y=sub["Revenue"],
+                             name=div, marker_color=colors.get(div,"#888")))
+    fig.update_layout(**_base(h=280, legend=dict(orientation="h",y=1.1,x=0)),
+                      barmode="group",
+                      xaxis=dict(showgrid=False),
+                      yaxis=dict(showgrid=True, gridcolor=_GRID))
+    return fig
+
+
+def restock_timeline_chart(restock_df: pd.DataFrame) -> go.Figure:
+    """Bar chart: customers by days_until_call."""
+    df = restock_df.copy()
+    cmap = {"CRITICAL":_C_RED,"HIGH":_C_AMBER,"MEDIUM":_C_BLUE,"OK":_C_TEAL}
+    # Group by days_until_call
+    grp = (df.groupby(["days_until_call","urgency"])
+             .size().reset_index(name="count")
+             .sort_values("days_until_call"))
+    fig = go.Figure()
+    for urg in ["CRITICAL","HIGH","MEDIUM","OK"]:
+        sub = grp[grp["urgency"]==urg]
+        if sub.empty: continue
+        fig.add_trace(go.Bar(x=sub["days_until_call"], y=sub["count"],
+                             name=urg, marker_color=cmap.get(urg,"#888")))
+    fig.update_layout(**_base(h=220, legend=dict(orientation="h",y=1.1,x=0)),
+                      barmode="stack",
+                      xaxis=dict(title="วันนับจากวันนี้", showgrid=False),
+                      yaxis=dict(title="จำนวนลูกค้า", showgrid=True, gridcolor=_GRID))
+    return fig
