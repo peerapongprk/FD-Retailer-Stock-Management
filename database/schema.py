@@ -1,8 +1,9 @@
-"""Column name constants for RetailIQ — maps to Makro Sales By Items export."""
+"""Column name constants for RetailIQ."""
 
 class MAKRO:
     LOC_NUM    = "Loc Number"
     MONTH      = "Month"
+    DATE       = "Date"
     CUST_GROUP = "Customer Main Group Name"
     CUST_TYPE  = "Customer Type Name"
     CUSTOMER   = "Customer Name"
@@ -11,37 +12,29 @@ class MAKRO:
     DEPT       = "Department"
     CLASS      = "Class"
     ITEM       = "Item"
+    QTY        = "Net Sales Qty"
     REVENUE    = "Net Sales Amt"
     PROFIT     = "Net Profit"
 
-# FD Retailer group filter
 FD_RETAILER_GROUP = "FD RETAILER"
 
-# High-velocity classes for OOS prediction (top classes by revenue)
-HIGH_VELOCITY_CLASSES = [
-    "RTD TEA", "SOFT DRINK", "INSTANT_NOODLES", "ENERGY DRINK",
-    "JUICE", "WATER", "LOCAL BEER", "UHT", "SOY BEAN MILK",
-    "FUNCTIONAL DRINK", "SPIRIT & HARD LIQUOR (LOCAL)",
-    "Vegetable oil", "WHITE SUGAR", "DETERGENT", "SOAP",
-    "EXTRUDED & RICE CRACKER", "POTATO CHIPS",
-]
+DAY_TH = ["จันทร์","อังคาร","พุธ","พฤหัส","ศุกร์","เสาร์","อาทิตย์"]
 
-# RFM segment labels
 class RFM:
-    CHAMPION   = "Champion"
-    LOYAL      = "Loyal"
-    PROMISING  = "Promising"
-    AT_RISK    = "At Risk"
-    CHURNING   = "Churning"
-    NEW        = "New"
+    CHAMPION  = "Champion"
+    LOYAL     = "Loyal"
+    PROMISING = "Promising"
+    AT_RISK   = "At Risk"
+    CHURNING  = "Churning"
+    NEW       = "New"
 
 RFM_COLOR = {
-    RFM.CHAMPION:  "#10b981",
-    RFM.LOYAL:     "#3b82f6",
-    RFM.PROMISING: "#8b5cf6",
-    RFM.AT_RISK:   "#f59e0b",
-    RFM.CHURNING:  "#ef4444",
-    RFM.NEW:       "#6b7280",
+    RFM.CHAMPION:  "#0f7b55",
+    RFM.LOYAL:     "#1a6faf",
+    RFM.PROMISING: "#7c4dbd",
+    RFM.AT_RISK:   "#c07a00",
+    RFM.CHURNING:  "#c0392b",
+    RFM.NEW:       "#5a6a7a",
 }
 
 RFM_ADVICE = {
