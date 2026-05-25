@@ -538,7 +538,7 @@ def page_calendar():
         if sel_day:
             day_events = events[sel_day]
             st.markdown(f"**{sel_day} — {len(day_events)} รายการที่ต้องติดตาม**")
-            for ev in day_events:
+            for ei, ev in enumerate(day_events):
                 col_urg, col_cust, col_item, col_btn = st.columns([1.5, 2.5, 3.5, 1.2])
                 with col_urg:
                     st.markdown(urgency_badge(ev["urgency"]), unsafe_allow_html=True)
@@ -549,7 +549,7 @@ def page_calendar():
                     st.markdown(f'<div style="font-size:0.8rem;color:#475569;padding:4px 0">{ev["item"]}</div>',
                                 unsafe_allow_html=True)
                 with col_btn:
-                    if st.button("ดูลูกค้า", key=f"cal_{sel_day}_{ev['cust_id']}"):
+                    if st.button("ดูลูกค้า", key=f"cal_{sel_day}_{ei}_{ev['cust_id']}"):
                         go("customer_detail",
                            detail_cust_id=ev["cust_id"],
                            detail_cust_name=ev["cust_name"])
